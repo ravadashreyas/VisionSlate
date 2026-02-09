@@ -120,13 +120,13 @@ while cap.isOpened():
                 pen = False
                 eraser = False
 
-            if gesture == "clear":
+            if gesture == "clear" and not(pen or eraser):
                 canvas.clear_canvas()
-            if gesture == "switch":
+            if gesture == "switch" and not(pen or eraser):
                 for temp_canvas in screen.get_all_canvas():
                     number_of_canvases = len(screen.get_all_canvas())
                     canvas_length = (w / number_of_canvases + 1)
-                    
+
                     
                 new_canvas = Canvas(w, h)
                 screen.add_canvas(new_canvas)
