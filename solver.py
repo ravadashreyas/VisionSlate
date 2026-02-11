@@ -4,6 +4,7 @@ from google import genai
 from PIL import Image
 from dotenv import load_dotenv
 import os
+import time
 import threading
 
 load_dotenv()
@@ -16,18 +17,23 @@ PROMPT = (
     "Keep your response short — one line max."
 )
 
+COOLDOWN_SECONDS = 30
+
 
 class Solver:
     def __init__(self):
         self.result = None
         self.is_solving = False
-        self.display_timer = 0
-        self.DISPLAY_DURATION = 150  
+        self.last_solve_time = 0
+        self.display_end_time = 0
+        self.DISPLAY_DURATION = 5.0
 
     def solve(self, canvas_img):
         """Send canvas image to Gemini in a background thread."""
         if self.is_solving:
-            return  
+            return
+        if time.time() - self.last_solve_time < COOLDOWN_SECONDS:
+            return
 
         self.is_solving = True
         self.result = "Solving..."
@@ -51,14 +57,13 @@ class Solver:
             self.result = f"Error: {str(e)}"
         finally:
             self.is_solving = False
-            self.display_timer = self.DISPLAY_DURATION
+            self.last_solve_time = time.time()
+            self.display_end_time = time.time() + self.DISPLAY_DURATION
 
     def draw_result(self, frame):
         """Draw the solve result on the frame if there's something to show."""
-        if self.result is None or self.display_timer <= 0:
+        if self.result is None or time.time() > self.display_end_time:
             return frame
-
-        self.display_timer -= 1
 
         h, w, _ = frame.shape
 

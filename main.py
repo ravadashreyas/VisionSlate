@@ -5,17 +5,17 @@ import math
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-
 from canvas import Canvas
 from screen import Screen
-from solver import Solver
+# from solver import Solver          # Gemini API solver (kept for reference)
+from LocalMathSolver import LocalMathSolver  # Offline local solver
 
 from distance import calc_distance, calc_distance_regular
 
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.5)
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
 
 cap = cv2.VideoCapture(0)
 
@@ -27,7 +27,7 @@ save_counter = 1
 
 screen = Screen()
 canvas = None
-solver = Solver()
+solver = LocalMathSolver()
 
 pen = False
 
@@ -126,6 +126,7 @@ while cap.isOpened():
                 canvas.clear_canvas()
             if gesture == "solve" and not(pen or eraser):
                 solver.solve(canvas.get_canvas())
+
             if gesture == "switch" and not(pen or eraser):
                 for temp_canvas in screen.get_all_canvas():
                     number_of_canvases = len(screen.get_all_canvas())
