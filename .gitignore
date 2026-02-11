@@ -2,3 +2,4 @@
 venv/
 __pycache__
 collect_data.py
+.env

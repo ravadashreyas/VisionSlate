@@ -8,6 +8,7 @@ from mediapipe.tasks.python import vision
 
 from canvas import Canvas
 from screen import Screen
+from solver import Solver
 
 from distance import calc_distance, calc_distance_regular
 
@@ -26,6 +27,7 @@ save_counter = 1
 
 screen = Screen()
 canvas = None
+solver = Solver()
 
 pen = False
 
@@ -122,6 +124,8 @@ while cap.isOpened():
 
             if gesture == "clear" and not(pen or eraser):
                 canvas.clear_canvas()
+            if gesture == "solve" and not(pen or eraser):
+                solver.solve(canvas.get_canvas())
             if gesture == "switch" and not(pen or eraser):
                 for temp_canvas in screen.get_all_canvas():
                     number_of_canvases = len(screen.get_all_canvas())
@@ -130,7 +134,7 @@ while cap.isOpened():
                     
                 new_canvas = Canvas(w, h)
                 screen.add_canvas(new_canvas)
-                canvas = screen.get_canvas(current_canvas_count)
+                #canvas = screen.get_canvas(current_canvas_count)
                 current_canvas_count += 1
                  
             if pen:
@@ -148,6 +152,7 @@ while cap.isOpened():
     _, imgInv = cv2.threshold(imgGray, 10, 255, cv2.THRESH_BINARY_INV)
     frame = cv2.bitwise_and(frame, frame, mask=imgInv)
     frame = cv2.bitwise_or(frame, canvas.get_canvas())
+    frame = solver.draw_result(frame)
     cv2.imshow("Virtual Whiteboard", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
