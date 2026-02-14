@@ -13,8 +13,8 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 from canvas import Canvas
-from screen import Screen
-from solver import Solver
+from old files.screen import Screen
+from old files.solver import Solver
 # from LocalMathSolver import LocalMathSolver
 
 from distance import calc_distance, calc_distance_regular
