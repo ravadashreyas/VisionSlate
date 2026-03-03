@@ -42,8 +42,10 @@ options = GestureRecognizerOptions(
 
 recognizer = GestureRecognizer.create_from_options(options)
 
-# TODO: Create a GestureAuth instance
-# TODO: Create a LivenessChecker instance
+# Create a GestureAuth instance
+auth = GestureAuth()
+# Create a LivenessChecker instance
+liveness = LivenessChecker()
 
 
 while cap.isOpened():
@@ -87,32 +89,63 @@ while cap.isOpened():
                 landmark_drawing_spec=None,
                 connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=1)
             )
-            # TODO: Pass face_landmarks to your LivenessChecker.process_frame()
+            # Pass face_landmarks to your LivenessChecker.process_frame()
+            liveness.process_frame(face_landmarks)
 
-    # TODO: Only allow gesture auth if liveness.is_alive() is True
-    # TODO: Display liveness status on screen (liveness.get_status())
+    # Only allow gesture auth if liveness.is_alive() is True
+    # Display liveness status on screen (liveness.get_status())
+    liveness_status = liveness.get_status()
+    cv2.putText(frame, liveness_status, (50, 90), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
-    # TODO: Pass the detected gesture and score to your GestureAuth instance every frame
-
-
-    # TODO: Handle keyboard input
-    #   'e' → prompt for username, start enrollment
-    #   'v' → prompt for username, start verification
-    #   SPACE (key == 32) → signal sequence is complete
-    #   ESC (key == 27) → cancel current operation
+    if liveness.is_alive():
+        # Pass the detected gesture and score to your GestureAuth instance every frame
+        auth.process_gesture(gesture, score)
 
 
-    # TODO: Draw UI overlay on the frame
-    #   - Status message (what should the user do next?)
-    #   - Current sequence progress (which gestures have been registered so far?)
-    #   - Hold progress bar (how close is the current gesture to registering?)
-    #   - Result display (ACCESS GRANTED / ACCESS DENIED)
+    # Handle keyboard input
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
+        break
+    elif key == ord('e'):
+        username = input("Enter username for enrollment: ")
+        auth.start_enrollment(username)
+        liveness.reset()
+    elif key == ord('v'):
+        username = input("Enter username for verification: ")
+        auth.start_verification(username)
+        liveness.reset()
+    elif key == 32: # SPACE
+        auth.finish_sequence()
+    elif key == 27: # ESC
+        auth.cancel()
+
+
+    # Draw UI overlay on the frame
+    # Status message (what should the user do next?)
+    cv2.putText(frame, auth.status_message, (50, h - 50), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+    
+    # Current sequence progress
+    seq_str = " -> ".join(auth.current_sequence)
+    cv2.putText(frame, f"Seq: {seq_str}", (50, h - 100), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+    
+    # Hold progress bar
+    if auth.current_held_gesture and not auth.gesture_registered:
+        hold_time = min(time.time() - auth.gesture_start_time, 0.5)
+        bar_width = int((hold_time / 0.5) * 200)
+        cv2.rectangle(frame, (50, 110), (50 + bar_width, 130), (0, 255, 255), -1)
+        cv2.rectangle(frame, (50, 110), (250, 130), (255, 255, 255), 2)
+
+    # Result display (ACCESS GRANTED / ACCESS DENIED)
+    if auth.result_display:
+        res_color = (0, 255, 0) if auth.result_display == "GRANTED" else (0, 0, 255)
+        cv2.putText(frame, f"ACCESS {auth.result_display}", (w // 2 - 150, h // 2), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, res_color, 4)
 
 
     cv2.imshow("Gesture Auth", frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
 cap.release()
 cv2.destroyAllWindows()
